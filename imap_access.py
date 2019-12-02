@@ -15,7 +15,7 @@ import logging
 import threading
 import smtplib, ssl
 from email.mime.text import MIMEText
-
+from email.utils import parseaddr
 
 
 import sys
@@ -229,11 +229,11 @@ def ParseEmails(files):
     return dfParsed
 
 
-
-
-
-
-
+'''
+    code by TaeHwan Jung(@graykode)
+    Original Paper and repository here : https://github.com/openai/gpt-2
+    GPT2 Pytorch Model : https://github.com/huggingface/pytorch-pretrained-BERT
+'''
 import os
 import sys
 import torch
@@ -248,29 +248,32 @@ from GPT2.encoder import get_encoder
 
 import requests
 import random
+import string  # to process standard python strings
 import warnings
-
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 warnings.filterwarnings('ignore')
 
 import nltk
 from nltk.stem import WordNetLemmatizer
-nltk.download('popular', quiet=True) # for downloading packages
 
-
-
+nltk.download('popular', quiet=True)  # for downloading packages
 
 a = "a1"
 b = ["sex", "girl", "woman", "want", "money"]
-c =  "Hey handsome. I have just, only  watched your pictures. You are very attrractive. Iam so, very bored tonight and I want 2 offer u talking. My profile is http://dating-future69.com/?b9af34-1&sid=3D6 here."
+c = "Hey handsome. I have just, only  watched your pictures. You are very attrractive. Iam so, very bored tonight and I want 2 offer u talking. My profile is http://dating-future69.com/?b9af34-1&sid=3D6 here."
 d = "get with me f#ckbuddy"
 
 
 def mail_body_generator(a, b):
+    #Topic 1 = Blackmail
+    #Topic 2 = Sex
+    #Topic 0 = undecided -> manual processing needed
     # Set up clustering options and get cluster value
-    dict1 = {1: "Sex proposal", 2: "Extorting money", 3: "Product offer", 4: "Malicious Software"}
-    dict_engager = {1: "More pictures", 2: "Issue", 3: "Product", 4: "Software"}
     a = int(a[0])
+    dict1 = {2: "Sex proposal", 1: "Extorting money", 0: "Product offer", 3: "Malicious Software"}
+    dict_engager = {2: "More pictures", 1: "Issue", 0: "Product", 3: "Software"}
     cluster = dict1[a]
     words_bag_sentence = " ".join(b) + "."
     subject = d
@@ -283,59 +286,57 @@ def mail_body_generator(a, b):
         dict_engager[a])
     return input_mail
 
+
 def mail_genearator(a, b, c, d):
-    #Set up clustering options and get cluster value
-    dict1 = {1: "Sex proposal", 2: "Extorting money", 3: "Product offer", 4: "Malicious Software"}
-    dict_engager = {1: "More pictures", 2: "Issue", 3: "Product", 4: "Software"}
+    input_mail = mail_body_generator(a, b)
     a = int(a[0])
-    d = d[0]
-    cluster = dict1[a]
-    words_bag_sentence = " ".join(b) + "."
-    subject = d
-    greeting_0 = "Hello, sadly I dont speak in english GOOD. {} , I say yes. Provide more information. ".format(dict_engager[a])
 
-    #This list need to be updated with random greetings
-    greeting_list = []
-    input_mail = greeting_0 + words_bag_sentence + "Please provide more information about {}. Yours faithfully, John".format(dict_engager[a])
-
-    #This element in next verswion will be ranodmly chosen
+    # This element in next verswion will be ranodmly chosen
+    dict_engager = {2: "More pictures", 1: "Issue", 0: "Product", 3: "Software"}
+    greeting_0 = "Hello, sadly I dont speak in english GOOD. {} , I say yes. Provide more information. ".format(
+        dict_engager[a])
     greeting_1 = greeting_0
     engager = "Please provide more information about {}. Yours faithfully, John".format(dict_engager[a])
 
-
-    #this lement takes the main function and as inout takes global variable state _dict
-    text_body = text_generator(state_dict)
-    sent_tokens = nltk.sent_tokenize(text_body)# converts to list of sentences
-    word_tokens = nltk.word_tokenize(text_body)# converts to list of words
+    # this lement takes the main function and as inout takes global variable state _dict
+    text_body = text_generator(state_dict, input_mail)
+    sent_tokens = nltk.sent_tokenize(text_body)  # converts to list of sentences
+    word_tokens = nltk.word_tokenize(text_body)  # converts to list of words
     clean_tokens = []
     for i in sent_tokens:
-        if ("<"or ">"or "Anonymous") in i:
+        if i.find("<") != -1 or i.find(">") != -1 or i.find("Anonymous") != -1:
             pass
         else:
             clean_tokens.append(i)
-    print(sent_tokens, file=open("output.txt", "a"))
+    print(sent_tokens, file=open("results\gpt_2_output.txt", "a+"))
 
-    print(greeting_1, file=open("mail_text.txt", "a"))
-    print(clean_tokens[1], file=open("mail_text.txt", "a"))
-    print(clean_tokens[2], file=open("mail_text.txt", "a"))
-    print(engager, file=open("mail_text.txt", "a"))
+    if os.path.exists('results'):
+        pass
+    else:
+        os.mkdir("results")
+
+    print(greeting_1, file=open("results\mail_text.txt", "a"))
+    print(clean_tokens[1], file=open("results\mail_text.txt", "a"))
+    print(clean_tokens[2], file=open("results\mail_text.txt", "a"))
+    print(engager, file=open("results\mail_text.txt", "a"))
+
+    print(greeting_1 + clean_tokens[1] + clean_tokens[2] + engager)
 
     return greeting_1 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager
 
 
-
-def text_generator(state_dict):
+def text_generator(state_dict, input_mail):
     parser = argparse.ArgumentParser()
     parser.add_argument("--text", type=str, required=False)
     parser.add_argument("--quiet", type=bool, default=False)
     parser.add_argument("--nsamples", type=int, default=1)
     parser.add_argument('--unconditional', action='store_true', help='If true, unconditional generation.')
-    parser.add_argument("--batch_size", type=int, default= 1)
+    parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--length", type=int, default=-1)
     parser.add_argument("--temperature", type=float, default=0.7)
     parser.add_argument("--top_k", type=int, default=0)
     args = parser.parse_args()
-    text = 'Test'
+    text = input_mail
     if args.quiet is False:
         print(args)
 
@@ -369,7 +370,7 @@ def text_generator(state_dict):
     for _ in range(args.nsamples // args.batch_size):
         out = sample_sequence(
             model=model, length=args.length,
-            context=context_tokens  if not  args.unconditional else None,
+            context=context_tokens if not args.unconditional else None,
             start_token=enc.encoder['<|endoftext|>'] if args.unconditional else None,
             batch_size=args.batch_size,
             temperature=args.temperature, top_k=args.top_k, device=device
@@ -379,9 +380,9 @@ def text_generator(state_dict):
             generated += 1
             text = enc.decode(out[i])
             if args.quiet is False:
-                print("=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40)
-            return(text)
-
+                pass
+                # print("=" * 40 + " SAMPLE " + str(generated) + " " + "=" * 40)
+            return (text)
 
 
 """
@@ -393,8 +394,6 @@ def text_generator(state_dict):
         Yours faithfully, 
         John
 """
-
-
 
 IMAP_SERVER = 'imap.spaceweb.ru'
 SMTP_SERVER = 'smtp.spaceweb.ru'
@@ -478,15 +477,28 @@ def process_mailbox(M):
                 move_email(M, num, 'SpamFailed')
                 continue
             print(text)  # print the email content
-            receiver = EMAIL_ACCOUNT
+            return_path = EMAIL_ACCOUNT
+            from_email = EMAIL_ACCOUNT
+            sender_email = EMAIL_ACCOUNT
             for item in msg._headers:
                 if item[0].find('Return-path') != -1:
-                    receiver = item[1]
+                    return_path = item[1]
+                elif item[0].find('From') != -1:
+                    from_email = item[1]
+                elif item[0].find('Sender') != -1:
+                    sender_email = item[1]
+
+            if parseaddr(return_path)[1] != '':
+                receiver = parseaddr(return_path)[1]
+            elif parseaddr(from_email)[1] != '':
+                receiver = parseaddr(from_email)[1]
+            elif parseaddr(sender_email)[1] != '':
+                receiver = parseaddr(sender_email)[1]
             receiver = EMAIL_ACCOUNT
 
             result = ParseEmails(['%s/%s.eml' %(OUTPUT_DIRECTORY, num)])
 
-            generated = mail_body_generator(result['Dominant_Topic'].tolist(), result['Keywords'].tolist())
+            generated = mail_genearator(result['Dominant_Topic'].tolist(), result['Keywords'].tolist(), result['Raw Email'].tolist(), result['Subjects'].tolist())
 
             respond_email(receiver, generated)
             with open("output.txt", "a", encoding="utf-8") as myfile:
