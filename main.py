@@ -19,6 +19,7 @@ from email.utils import parseaddr
 from pprint import pprint
 import os
 import torch
+from envelopes import Envelope, GMailSMTP
 
 from topic_modelling import ParseEmails
 from response_generation import mail_genearator
@@ -66,6 +67,19 @@ def respond_email(receiver, message):
         server.login(EMAIL_ACCOUNT, PASSWORD)
         server.sendmail(EMAIL_ACCOUNT, receiver, message)
         server.quit()
+
+def send_email(receiver, subject, body, source):
+    envelope = Envelope(
+        from_addr=(EMAIL_ACCOUNT),
+        to_addr=(receiver),
+        subject=subject,
+        text_body=body
+    )
+    envelope.add_attachment(source)
+
+    # Send the envelope using an ad-hoc connection...
+    envelope.send(SMTP_SERVER, login=EMAIL_ACCOUNT,
+                  password=PASSWORD, tls=True)
 
 def move_email(M, email_id, folder):
     resp, data = M.fetch(email_id, "(UID)")
@@ -127,9 +141,16 @@ def process_mailbox(M):
 
             result = ParseEmails(['%s/%s.eml' %(OUTPUT_DIRECTORY, num)])
 
+            subject = result['Subjects'].tolist()
+
+            if len(subject) > 0:
+                subject = subject[0]
+            else:
+                subject = "RE: "
+
             generated = mail_genearator(result['Dominant_Topic'].tolist(), result['Keywords'].tolist(), result['Raw Email'].tolist(), result['Subjects'].tolist())
 
-            respond_email(receiver, generated)
+            send_email(receiver, subject, generated, '%s/%s.eml' %(OUTPUT_DIRECTORY, num))
             with open("output.txt", "a", encoding="utf-8") as myfile:
                 myfile.write(text)
 
