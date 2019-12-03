@@ -82,7 +82,7 @@ def process_words(texts, stop_words, allowed_postags=['NOUN', 'ADJ', 'VERB', 'AD
     return texts_out
 
 
-def format_topics_sentences(ldamodel, corpus, texts, rawEmail, subjects, fromMail):
+def format_topics_sentences(ldamodel, corpus, texts, rawEmail, subjects, fromMail, emailFileNames):
     # Init output
     sent_topics_df = pd.DataFrame()
 
@@ -107,7 +107,8 @@ def format_topics_sentences(ldamodel, corpus, texts, rawEmail, subjects, fromMai
     contentsRaw = pd.Series(rawEmail)
     contentsSubjects = pd.Series(subjects)
     contentsFrom = pd.Series(fromMail)
-    sent_topics_df = pd.concat([sent_topics_df, contents, contentsSubjects, contentsFrom, contentsRaw], axis=1)
+    contentsFileName = pd.Series(emailFileNames)
+    sent_topics_df = pd.concat([contentsFileName, sent_topics_df, contents, contentsSubjects, contentsFrom, contentsRaw], axis=1)
     return (sent_topics_df)
 
 
@@ -141,29 +142,31 @@ def EmailToDf(listPathEmail):
 
 def PredictEmails(listPathEmail, pathLDAModel):
     df, rawEmail, subjects, fromMail = EmailToDf(listPathEmail)
+    if len(df.index > 0):
+        # Convert to list
+        data = df[0].values.tolist()
+        data_words = list(sent_to_words(data))
 
-    # Convert to list
-    data = df[0].values.tolist()
-    data_words = list(sent_to_words(data))
+        data_ready = process_words(data_words, stop_words)  # processed Text Data!
+        print(data_ready)
 
-    data_ready = process_words(data_words, stop_words)  # processed Text Data!
-    print(data_ready)
+        # Create Dictionary
+        id2word = corpora.Dictionary(data_ready)
 
-    # Create Dictionary
-    id2word = corpora.Dictionary(data_ready)
+        # Create Corpus: Term Document Frequency
+        corpus = [id2word.doc2bow(text) for text in data_ready]
 
-    # Create Corpus: Term Document Frequency
-    corpus = [id2word.doc2bow(text) for text in data_ready]
+        lda_model = gensim.models.ldamodel.LdaModel.load(pathLDAModel)
 
-    lda_model = gensim.models.ldamodel.LdaModel.load(pathLDAModel)
+        df_topic_sents_keywords = format_topics_sentences(lda_model, corpus, data_ready, rawEmail, subjects, fromMail, listPathEmail)
 
-    df_topic_sents_keywords = format_topics_sentences(lda_model, corpus, data_ready, rawEmail, subjects, fromMail)
-
-    # Format
-    df_dominant_topic = df_topic_sents_keywords.reset_index()
-    df_dominant_topic.columns = ['Document_No', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Text', 'Subjects',
-                                 'From', 'Raw Email']
-    return (df_dominant_topic)
+        # Format
+        df_dominant_topic = df_topic_sents_keywords.reset_index()
+        df_dominant_topic.columns = ['Document_No', 'FileName', 'Dominant_Topic', 'Topic_Perc_Contrib', 'Keywords', 'Text', 'Subjects',
+                                    'From', 'Raw Email']
+        return (df_dominant_topic)
+    else:
+        return pd.DataFrame() # something went wrong. return empty dataframe
 
 
 def ManualRopicModellingPostProcess(dfProcessedEmail):
@@ -222,3 +225,8 @@ def ParseEmails(files):
     # print(dfParsed)
     # dfParsed.to_csv('allEmails_3Topics_PostProcess.csv', sep='\t', encoding='utf-8')
     return dfParsed
+
+#import glob
+#res = ParseEmails(glob.glob("spam/*.eml"))
+#print(res)
+#res.to_csv("test.csv", sep='\t')
