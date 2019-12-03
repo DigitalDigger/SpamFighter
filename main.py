@@ -30,7 +30,7 @@ EMAIL_ACCOUNT = "info@infoprocsoft.com"
 EMAIL_FOLDER = "Spam"
 OUTPUT_DIRECTORY = './spam'
 
-PASSWORD = 'skipidar'
+PASSWORD = 'BlackmailSexOffer123'
 
 logger = logging.getLogger('SpamFighter')
 logger.setLevel(logging.DEBUG)
