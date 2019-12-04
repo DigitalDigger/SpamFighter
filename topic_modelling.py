@@ -195,7 +195,7 @@ def EmailToDf(listPathEmail):
                 fromMail.append(msg['from'])
                 if "html" in contentType.lower():  # extract content form html
                     body = cleanMe(body)
-                    print(body)
+                    print(f"Part of the email of length {len(body)}: {(body)[:50]}")
 
                 data.append(body) 
                 successFullEmails.append(pathEmail) # store all email paths that are valid
@@ -211,7 +211,7 @@ def EmailToDf(listPathEmail):
     return df, data, subjects, fromMail, successFullEmails
 
 
-def PredictEmails(listPathEmail, pathLDAModel):
+def PredictEmails(listPathEmail, trainedLDAModel):
     df, rawEmail, subjects, fromMail, successFullEmails = EmailToDf(listPathEmail)
     if len(df.index > 0):
         # Convert to list
@@ -227,7 +227,7 @@ def PredictEmails(listPathEmail, pathLDAModel):
         # Create Corpus: Term Document Frequency
         corpus = [id2word.doc2bow(text) for text in data_ready]
 
-        lda_model = gensim.models.ldamodel.LdaModel.load(pathLDAModel)
+        lda_model = trainedLDAModel #gensim.models.ldamodel.LdaModel.load(pathLDAModel)
 
         df_topic_sents_keywords = format_topics_sentences(lda_model, corpus, data_ready, rawEmail, subjects, fromMail, successFullEmails)
 
@@ -240,7 +240,41 @@ def PredictEmails(listPathEmail, pathLDAModel):
         return pd.DataFrame() # something went wrong. return empty dataframe
 
 
-def ManualRopicModellingPostProcess(dfProcessedEmail):
+def TrainModel(listPathEmail):
+    df, _, _, _, _ = EmailToDf(listPathEmail)
+    if len(df.index > 0):
+        # Convert to list
+        data = df[0].values.tolist()
+        data_words = list(sent_to_words(data))
+
+        data_ready = process_words(data_words, stop_words)  # processed Text Data!
+        #print(data_ready)
+
+        # Create Dictionary
+        id2word = corpora.Dictionary(data_ready)
+
+        # Create Corpus: Term Document Frequency
+        corpus = [id2word.doc2bow(text) for text in data_ready]
+
+        # Build LDA model
+        lda_model = gensim.models.ldamodel.LdaModel(corpus=corpus,
+                                                id2word=id2word,
+                                                num_topics=3, 
+                                                random_state=100,
+                                                update_every=1,
+                                                chunksize=10,
+                                                passes=10,
+                                                alpha='symmetric',
+                                                iterations=10,
+                                                per_word_topics=True)
+        
+        print(lda_model.print_topics())
+
+        return (lda_model)
+    else:
+        return None # something went wrong. return empty
+
+def ManualTopicModellingPostProcess(dfProcessedEmail):
     countChangeToTopic3 = 0
     countChangeToTopic2 = 0
     countChangeToTopic1 = 0
@@ -270,8 +304,49 @@ def ManualRopicModellingPostProcess(dfProcessedEmail):
     print("In Post Process Changed " + str(countChangeToTopic1) + " to topic 1.")
     return dfProcessedEmail
 
+# NOT USED
+# This is not working properlty right now, but its not needed in the current version anyways
+def CreateTopicMapping(lda_model):
+    t =lda_model.print_topics()
+    print(t)
+    d = {}
+    for topicIdx in range(3):
+        # check for first topic (we assume that this one is easy to detect)
+        check = True
+        for w in ["girl", "sex"]:
+            check = check and w in t[topicIdx][1]
+        if check:
+            d["girl"] = topicIdx
+            continue
 
-def ParseEmails(files):
+        # check second topic (this one is not so easy and shall have many variations)
+        check = True
+        for w in ["account", "payment"]:
+            check = check and w in t[topicIdx][1]
+        if check:
+            d["blackmail"] = topicIdx
+            continue
+
+        for w in ["bitcoin", "payment"]:
+            check = check and w in t[topicIdx][1]
+        if check:
+            d["blackmail"] = topicIdx
+            continue
+
+        for w in ["screenshot", "payment"]:
+            check = check and w in t[topicIdx][1]
+        if check:
+            d["blackmail"] = topicIdx
+            continue
+        
+        # no topic match found. So this one is a undecided topic
+        d["undecided"] = topicIdx
+    d["selling"] = 3 # this is a manually added topic that wil be used later in the "ManualTopicModellingPostProcess" function
+    return d
+
+
+
+def ParseEmails(files, pathEmailDatasets):
     # Topics
     # [(0,
     #  '0.024*"video" + 0.014*"screen" + 0.013*"letter" + 0.012*"contact" + '
@@ -289,17 +364,24 @@ def ParseEmails(files):
     # Topic 1 = Blackmail
     # Topic 2 = Sex
     # Topic 0 = undecided -> manual processing needed
+    # Topic 3 = selling (after manual processing)
+    
+    print("Training Model")
+    pathEmailDatasets = glob.glob(pathEmailDatasets+"/*.eml")
+    ldaModel = TrainModel(pathEmailDatasets)
 
-    dfParsed = PredictEmails(files, "trainedLDAModel_3Topics.mod")
+    print("Using Model for Pediction")
+    dfParsed = PredictEmails(files, ldaModel)
+
     # print(dfParsed)
-    dfParsed = ManualRopicModellingPostProcess(dfParsed)
+    dfParsed = ManualTopicModellingPostProcess(dfParsed)
     # print(dfParsed)
     # dfParsed.to_csv('allEmails_3Topics_PostProcess.csv', sep='\t', encoding='utf-8')
     return dfParsed
 
-#import glob
-#paths = glob.glob("spam/*.eml")
+import glob
+paths = glob.glob("spam/*.eml")
 #paths = glob.glob("D:/OneDriveYeritsyan/OneDrive/Studium/Maastricht/IS/Project/spam/*.eml")
-#res = ParseEmails(paths)
-#print(res)
-#res.to_csv("testNewDataset.csv", sep='\t')
+res = ParseEmails(paths, "spam")
+print(res[['FileName', 'Dominant_Topic', 'Raw Email']])
+res.to_csv("testNewDataset.csv", sep='\t')
