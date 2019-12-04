@@ -61,37 +61,51 @@ def mail_genearator(a, b, c, d):
     a = int(a[0])
 
     # This element in next verswion will be ranodmly chosen
-    dict_engager = {2: "More pictures", 1: "Issue", 0: "Product", 3: "Software"}
-    greeting_0 = "Hello, sadly I dont speak in english GOOD. {} , I say yes. Provide more information. ".format(
-        dict_engager[a])
-    greeting_1 = greeting_0
-    engager = "Please provide more information about {}. Yours faithfully, John".format(dict_engager[a])
-
-    # this lement takes the main function and as inout takes global variable state _dict
-    text_body = text_generator(globals.state_dict, input_mail)
-    sent_tokens = nltk.sent_tokenize(text_body)  # converts to list of sentences
-    word_tokens = nltk.word_tokenize(text_body)  # converts to list of words
+    dict_engager = {2: "nice pictures", 1: "the issue", 0: "product", 3: "software"}
+    GREETING_RESPONSES = ["hi", "hey", "hi there", "hello", "I am glad! You are talking to me", "Dear friend,"]
+    greeting_0 = "Hello, sadly I dont speak in english GOOD. {} , I say yes. Provide more information. ".format(dict_engager[a])
+    greeting_1 = random.choice(GREETING_RESPONSES) + '\n' + "Thanks for your mail about {} and reaching out to me. ".format(dict_engager[a])
+    engager_0 = "Please provide more information about {}. ".format(dict_engager[a])
+    ending = "Yours faithfully, John"
+    Engager_RESPONSES = ["As always thanks for keeping in touch. How I can help?","The wise man once said that we say BYE for by your eye. What your eye is looking for?","Hope to hear from you soon with more info.","Nevertheless thanks for your time and maybe update me soon","Hope to hear from you soon with more info.","Please I need to know more ASAP",]
+    engager_1 = random.choice(Engager_RESPONSES)
+    
+    #this lement takes the main function and as inout takes global variable state _dict
+    text_body = text_generator(state_dict, input_mail )
+    sent_tokens = nltk.sent_tokenize(text_body)# converts to list of sentences 
+  
+    
     clean_tokens = []
     for i in sent_tokens:
         if i.find("<") != -1 or i.find(">") != -1 or i.find("Anonymous") != -1:
             pass
         else:
             clean_tokens.append(i)
-    print(sent_tokens, file=open("results\gpt_2_output.txt", "a+"))
-
+            
+    final_respond = ""    
+    if e == True:
+        final_respond =  '\n' + greeting_0 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_0 + ending
+        
+    elif e == False:
+        final_respond = '\n' + greeting_1 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_1 + ending
+    else:
+        final_respond = "5th input variable is not in Boolean."
+    return final_respond 
+    
+    """
+    VERSION FOR STORING outputs as file
+    print(sent_tokens, file=open("results\gpt_2_output.txt", "a"))
+    
     if os.path.exists('results'):
         pass
     else:
         os.mkdir("results")
-
+    
     print(greeting_1, file=open("results\mail_text.txt", "a"))
-    print(clean_tokens[1], file=open("results\mail_text.txt", "a"))
-    print(clean_tokens[2], file=open("results\mail_text.txt", "a"))
+    print(clean_tokens[1], file=open("results\mail_text.txt", "a"))        
+    print(clean_tokens[2], file=open("results\mail_text.txt", "a")) 
     print(engager, file=open("results\mail_text.txt", "a"))
-
-    print(greeting_1 + clean_tokens[1] + clean_tokens[2] + engager)
-
-    return greeting_1 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager
+    """
 
 
 def text_generator(state_dict, input_mail):
@@ -132,7 +146,7 @@ def text_generator(state_dict, input_mail):
     elif args.length > config.n_ctx:
         raise ValueError("Can't get samples longer than window size: %s" % config.n_ctx)
 
-    print(text)
+    #print(text)
     context_tokens = enc.encode(text)
 
     generated = 0
