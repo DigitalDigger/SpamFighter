@@ -84,10 +84,10 @@ def mail_genearator(a, b, c, d):
             
     final_respond = ""    
     if e == True:
-        final_respond =  '\n' + greeting_0 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_0 + ending
+        final_respond =  '\n' + greeting_0 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_0 +'\n' + ending
         
     elif e == False:
-        final_respond = '\n' + greeting_1 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_1 + ending
+        final_respond = '\n' + greeting_1 + '\n' + clean_tokens[1] + '\n' + clean_tokens[2] + '\n' + engager_1 +'\n' + ending
     else:
         final_respond = "5th input variable is not in Boolean."
     return final_respond 
