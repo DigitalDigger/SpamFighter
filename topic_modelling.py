@@ -379,9 +379,9 @@ def ParseEmails(files, pathEmailDatasets):
     # dfParsed.to_csv('allEmails_3Topics_PostProcess.csv', sep='\t', encoding='utf-8')
     return dfParsed
 
-import glob
-paths = glob.glob("spam/*.eml")
+#import glob
+#paths = glob.glob("spam/*.eml")
 #paths = glob.glob("D:/OneDriveYeritsyan/OneDrive/Studium/Maastricht/IS/Project/spam/*.eml")
-res = ParseEmails(paths, "spam")
-print(res[['FileName', 'Dominant_Topic', 'Raw Email']])
-res.to_csv("testNewDataset.csv", sep='\t')
+#res = ParseEmails(paths, "spam")
+#print(res[['FileName', 'Dominant_Topic', 'Raw Email']])
+#res.to_csv("testNewDataset.csv", sep='\t')
