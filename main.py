@@ -31,10 +31,11 @@ EMAIL_ACCOUNT = "info@infoprocsoft.com"
 EMAIL_FOLDER = "Spam"
 OUTPUT_DIRECTORY = './spam'
 
-PASSWORD = 'BlackmailSexOffer123'
+PASSWORD = 'WeFightSpammers!123'
 
 logger = logging.getLogger('SpamFighter')
 logger.setLevel(logging.DEBUG)
+
 
 
 print(struct.calcsize("P") * 8)
@@ -137,27 +138,29 @@ def process_mailbox(M):
                 receiver = parseaddr(from_email)[1]
             elif parseaddr(sender_email)[1] != '':
                 receiver = parseaddr(sender_email)[1]
-            receiver = EMAIL_ACCOUNT
+            # receiver = EMAIL_ACCOUNT
 
-            result = ParseEmails(['%s/%s.eml' %(OUTPUT_DIRECTORY, num)])
+            result = ParseEmails(['%s/%s.eml' %(OUTPUT_DIRECTORY, num)], '%s/' %(OUTPUT_DIRECTORY))
 
-            subject = result['Subjects'].tolist()
+            if len(result.index) > 0:
+                subject = result['Subjects'].tolist()
 
-            if len(subject) > 0:
-                subject = subject[0]
-            else:
-                subject = "RE: "
+                if len(subject) > 0:
+                    subject = subject[0]
+                else:
+                    subject = "RE: "
 
-            generated = mail_genearator(result['Dominant_Topic'].tolist(), result['Keywords'].tolist(), result['Raw Email'].tolist(), result['Subjects'].tolist())
+                generated = mail_genearator(result['Dominant_Topic'].tolist(), result['Text'].tolist()[0], result['Raw Email'].tolist(), result['Subjects'].tolist(), True)
 
-            send_email(receiver, subject, generated, '%s/%s.eml' %(OUTPUT_DIRECTORY, num))
-            with open("output.txt", "a", encoding="utf-8") as myfile:
-                myfile.write(text)
+                send_email(receiver, subject, generated, '%s/%s.eml' %(OUTPUT_DIRECTORY, num))
+                with open("output.txt", "a", encoding="utf-8") as myfile:
+                    myfile.write(text)
+                    myfile.write(generated)
 
 
 
-            move_email(M, num, 'SpamProcessed')
-            time.sleep(5)
+                move_email(M, num, 'SpamProcessed')
+            time.sleep(50)
 
 
 def main():
