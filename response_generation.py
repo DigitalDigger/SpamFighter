@@ -21,6 +21,7 @@ import string  # to process standard python strings
 import warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import globals
 
 warnings.filterwarnings('ignore')
 
@@ -56,7 +57,7 @@ def mail_body_generator(a, b):
     return input_mail
 
 
-def mail_genearator(a, b, c, d):
+def mail_genearator(a, b, c, d, e):
     input_mail = mail_body_generator(a, b)
     a = int(a[0])
 
@@ -71,7 +72,7 @@ def mail_genearator(a, b, c, d):
     engager_1 = random.choice(Engager_RESPONSES)
     
     #this lement takes the main function and as inout takes global variable state _dict
-    text_body = text_generator(state_dict, input_mail )
+    text_body = text_generator(globals.state_dict, input_mail )
     sent_tokens = nltk.sent_tokenize(text_body)# converts to list of sentences 
   
     
