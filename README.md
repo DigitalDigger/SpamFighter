@@ -3,11 +3,11 @@
 **Spam the spammers**
 
 
-Spam  emails  represent  a  significant  share  of  all  emailscirculating  in  the  world.  They  are  used  for  a  wide  range  ofpurposes:  from  product  advertising  up  to  phishing  activitieswhen malcreants try to steal your confidential information.To  tackle  this  issue,  most  of  the  email  service  providersmake  use  of  dedicated  filters  to  block  spam.  Effectivenessof  such  filters  may  vary,  e.g.,  Google  claimed  in  2015  thatonly  0.1%  of  emails  that  end  up  in  your  gmail  inbox  folderis  spam. 
+Spam emails represent a significant share of all emails circulating in the world. They are used for a wide range of purposes: from product advertising up to phishing activities when malcreants try to steal your confidential information.
 
-However,  despite  the  high  success  rates  of  themodern  spam  filters  the  spam  industry  still  functions  andinduces  growing  costs  to  businesses.  Statistics  demonstratethat  even  a  single  response  to  12.5  million  spam  emails  stillallows spammers to earn around $7000 per day.
+To tackle this issue, most of the email service providers make use of dedicated filters to block spam. Effectiveness of such filters may vary, e.g., Google claimed in 2015 that only 0.1% of emails that end up in your gmail inbox folder is spam. However, despite the high success rates of the modern spam filters the spam industry still functions and induces growing costs to businesses. Statistics demonstrate that even a single response to 12.5 million spam emails still allows spammers to earn around $7000 per day.
 
-Our  approach  is  different  from  the  passive  defense  that  isexploited  by  spam  filters.  In  this  work  we  applied  an  activedefense, i.e., we automatically generate responses to the spamemails  and  sent  them  back  to  the  spammers.  Such  responsesare usually processed manually by malcreants which inducesadditional workload and a waste of time of the spammers. Theidea is similar to the denial-of-service attack but it is appliedto the human resources in our case.In  order  to  interest  spammers  in  responding  our  automati-cally generated emails, we apply the most recent advances inthe domain of the natural language processing, namely, deeplanguage generative models.
+Our approach is different from the passive defense that is exploited by spam filters. In this work we applied an active defense, i.e., we automatically generate responses to the spam emails and sent them back to the spammers. Such responses are usually processed manually by malcreants which induces additional workload and a waste of time of the spammers. The idea is similar to the denial-of-service attack but it is applied to the human resources in our case.
 
 ## Quick Start
 
